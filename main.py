@@ -1,3 +1,5 @@
+#from model2 import Model
+#from CPSC import ArrhythmiaDataset
 import time
 import json
 import torch
@@ -15,8 +17,6 @@ import numpy as np
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
 import matplotlib.pyplot as plt
-from model import Model
-from dataset import ArrhythmiaDataset
 
 
 def adjust_learning_rate(optimizer, epoch, lr=0.01):
@@ -50,7 +50,7 @@ class RunManager:
         self.loader = None
         self.tb = None
         self.df = pd.DataFrame()
-        self.saver = ModelSave(verbose=True, path=f'checkpoint_run_{self.run_id}.pt')
+        #self.saver = ModelSave(verbose=True, path=f'checkpoint_run_{self.run_id}.pt')
 
     def get_results(self):
         print(pd.DataFrame.from_dict(
@@ -58,14 +58,15 @@ class RunManager:
             orient='columns').sort_values("accuracy", axis=0, ascending=False)
         )
 
-    def begin_run(self, run, network, loader) -> None:
+    def begin_run(self, run, network, loader, lead, wavelet) -> None:
         self.run_start_time = time.time()
         self.run_params = run
         self.run_id += 1
         self.network = network
         self.loader = loader
+        self.lead = lead
+        self.wavelet = wavelet
         self.tb = SummaryWriter(comment=f'-{run}')
-
         images, labels = next(iter(self.loader))
         grid = torchvision.utils.make_grid(images)
         self.tb.add_image('images', grid)
@@ -102,8 +103,9 @@ class RunManager:
         results["accuracy"] = accuracy
         results["epoch duration"] = epoch_duration
         results["run duration"] = run_duration
-        self.saver(loss, self.network)
 
+        #self.saver.path = f'checkpoint_run_{self.run_id}_wavelet_{self.wavelet}_lead{self.lead}.pt'
+        #self.saver(loss, self.network)
         for k, v in self.run_params._asdict().items(): results[k] = v
         self.run_data.append(results)
         self.df = self.df.from_dict(self.run_data, orient='columns')  #pd.DataFrame.from_dict(self.run_data, orient='columns')
@@ -133,9 +135,10 @@ class Controls:
     @staticmethod
     def get_hyperparams():
         hyperparams = collections.OrderedDict(
+            wavelet=['mexh'],
             lr=[0.01],
-            batch_size=[10],
-            leads=[1],
+            batch_size=[100],
+            lead=[3],
             num_workers=[1],
             shuffle=[True],
             device=[torch.device("cuda:0" if torch.cuda.is_available() else "cpu")]
@@ -216,7 +219,7 @@ class ModelSave:
         self.val_loss_min = val_loss
 
 
-def run():
+def train():
     m = RunManager()
     for run in RunBuilder.get_runs(Controls.get_hyperparams()):
         #saver = ModelSave(verbose=True, path=f'checkpoint_{run_id}.pt')
@@ -225,16 +228,17 @@ def run():
         model = Model(attention=True).to(device)
         #for parameter in model.parameters():
         #    print(parameter.device)
-        train_set_1_dir_path = '/content/TrainingSet1'
-        ref_path = '/content/reference.csv'
-        dataset = ArrhythmiaDataset(train_set_1_dir_path, ref_path, leads=run.leads, normalize=True, wavelet='mexh')
+        train_set_1_dir_path = '/content/gdrive/MyDrive/TrainingSet1'
+        #full_set_path = '/content/gdrive/MyDrive/alldata'
+        ref_path = '/content/gdrive/MyDrive/reference.csv'
+        dataset = ArrhythmiaDataset(train_set_1_dir_path, ref_path, leads=run.lead, normalize=True, wavelet=run.wavelet)
         train_loader = DataLoader(dataset, batch_size=run.batch_size, shuffle=True, num_workers=run.num_workers)
         train_loader = DeviceDataLoader(train_loader, device)
         optimizer = optim.SGD(params=model.parameters(), lr=run.lr, momentum=0.9, nesterov=True)
         scheduler = ReduceLROnPlateau(optimizer, mode='min', patience=3, min_lr=1e-4)
 
-        m.begin_run(run, model, train_loader)
-        for epoch in range(5):
+        m.begin_run(run, model, train_loader, run.lead, run.wavelet)
+        for epoch in range(50):
             m.begin_epoch()
             #param_groups = optimizer.param_groups
             #for g in param_groups:
