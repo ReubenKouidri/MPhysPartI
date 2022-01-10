@@ -262,4 +262,4 @@ def train():
 
     
 if __name__ == 'main':
-  run()
+  train()
