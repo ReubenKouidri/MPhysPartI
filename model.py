@@ -1,5 +1,5 @@
-import torch
 from torch import nn
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
 class Model(nn.Module):
@@ -21,7 +21,6 @@ class Model(nn.Module):
         self.block_2 = nn.Sequential(self.layer_3, self.layer_4, self.maxpool2)
         self.second_last = nn.Sequential(self.dense_1, self.relu, self.dropout)
         self.last = nn.Sequential(self.dense_2, self.relu, self.softmax)
-        #self.dummy_param = nn.Parameter(torch.empty(0))  # to tell CAM what the device is
 
     def forward(self, t):
 
@@ -44,9 +43,7 @@ class Model(nn.Module):
             nn.ReLU(),
             nn.Linear(channels_in // reduction_factor, channels_in),
             nn.ReLU())
-        #device = self.dummy_param.device
-        #sequence.to(device)
-        sequence = sequence.to('cuda:0') 
+        sequence = sequence.to(device)
         global_mp = self._global_max_pool(input_tensor)
         global_ap = self._global_av_pool(input_tensor)
         global_mp = sequence(global_mp)
@@ -96,3 +93,4 @@ class Model(nn.Module):
     @staticmethod
     def _flatten(tensor):
         return tensor.view(tensor.size(0), -1)
+    
