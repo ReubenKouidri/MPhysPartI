@@ -1,5 +1,4 @@
 import csv
-#import cpsc2018
 import os
 import argparse
 import numpy as np
