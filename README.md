@@ -4,7 +4,7 @@
 Contains the code used to process the data and train the model, as well as generating answers to the 'test-set' and scoring.
 
 In its current state, for the code to work the dataset will need to be imported from the CPSC-2018 website: http://2018.icbeb.org/Challenge.html
-I recreated 'TrainingSet1' to contain the first 100 samples to use whilst testing whether the code was working correctly
+I recreated 'TrainingSet1' to contain the first 100 samples to use whilst testing whether the code was working correctly.
 The 'full dataset' is the union of all training sets
 
 The code:
