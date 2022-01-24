@@ -15,4 +15,4 @@ The code:
   5. 'score.py' will then score these answers, returning a .csv file containing the scores to the cardiac arrhythmia super-types.
   *'reference.csv'* contains the true labels for the corresponding files
   
-  
+p.s. As it stands, the code will suffer refactoring problems. This is resolved in Colab, but I have not yet transferred this over due to time.
