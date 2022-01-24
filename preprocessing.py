@@ -1,9 +1,9 @@
 from scipy.io import loadmat
 import os
 import matplotlib.pyplot as plt
+import torch
 from torch.utils.data import Dataset
 import pandas as pd
-import torch
 from typing import List, Union
 import tsmoothie
 from tsmoothie.smoother import *
@@ -12,6 +12,10 @@ import pywt
 
 
 class ArrhythmiaDataset(Dataset):
+    @property
+    def name(self):
+        return self.references['Recording']
+
     def __init__(self,
                  data_dir: str,
                  reference_file_csv: str,
@@ -38,7 +42,7 @@ class ArrhythmiaDataset(Dataset):
 
         if self.references.shape[0] is not self.__len__():
             self.references = self.references.truncate(after=self.__len__() - 1)  # when using an ordered dataset
-        self.targets = torch.as_tensor(self.references['First_label'] - 1, dtype=torch.int32)
+        self.targets = torch.as_tensor(self.references['First_label'] - 1, dtype=torch.int32)  # targets in [0,8] instead of [1,9]
 
     @staticmethod
     def _normalize(data):
@@ -52,7 +56,7 @@ class ArrhythmiaDataset(Dataset):
     def _smoothen(data):
         smoother = ConvolutionSmoother(window_len=8, window_type='ones')
         smoother.smooth(data)
-        return torch.tensor(smoother.smooth_data[0])
+        return torch.tensor(smoother.smooth_data[0])  # returning tensor? is this what i want?
 
     @staticmethod
     def _cwt(signal, wavelet, max_width):
@@ -74,7 +78,7 @@ class ArrhythmiaDataset(Dataset):
             - pulls the 'item-th' file from the data directory
             - ECG is cut to 2000 data points (4 seconds) (if True)
             - ECG is smoothed (if True)
-            - returns a tuple: (ECG, target)
+            - returns a tuple: (img, target)
         """
         file_path = os.path.join(self.data_dir, self.references.iloc[item, 0])
         data = loadmat(f'{file_path}.mat')
@@ -88,7 +92,7 @@ class ArrhythmiaDataset(Dataset):
         ecg_imgs = np.zeros((self.num_leads, 128, 128))
 
         base = np.zeros((self.num_leads, trim_length // step))
-        for i in np.arange(self.num_leads):
+        for i in np.arange(self.num_leads):  # will need to change to: for i in ecg_imgs....
             if self.trim:
                 base[i] = self._trim_data(ecg_data[i], trim_length, step)
             if self.normalize:
@@ -99,6 +103,7 @@ class ArrhythmiaDataset(Dataset):
                 ecg_imgs[i] = self._cwt(base[i], self.wavelet, eval(self.wavelet + "_max_width"))
 
         # ecg_data = torch.as_tensor(base)
+
         target = torch.as_tensor(self.references.iloc[item, 1] - 1)  # picks out the first label only
         ecg_imgs = torch.as_tensor(ecg_imgs, dtype=torch.float32)
 
