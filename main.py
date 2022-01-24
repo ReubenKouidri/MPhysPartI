@@ -2,7 +2,7 @@
 #from CPSC import ArrhythmiaDataset
 import time
 import json
-import torch
+#import torch
 import collections
 from itertools import product
 from typing import List
@@ -48,9 +48,9 @@ class RunManager:
 
         self.network = None
         self.loader = None
-        self.tb = None
+        #self.tb = None
         self.df = pd.DataFrame()
-        #self.saver = ModelSave(verbose=True, path=f'checkpoint_run_{self.run_id}.pt')
+        self.saver = ModelSave(verbose=True, path=f'checkpoint_run_{self.run_id}.pt')
 
     def get_results(self):
         print(pd.DataFrame.from_dict(
@@ -66,15 +66,15 @@ class RunManager:
         self.loader = loader
         self.lead = lead
         self.wavelet = wavelet
-        self.tb = SummaryWriter(comment=f'-{run}')
-        images, labels = next(iter(self.loader))
-        grid = torchvision.utils.make_grid(images)
-        self.tb.add_image('images', grid)
+        #self.tb = SummaryWriter(comment=f'-{run}')
+        #images, labels = next(iter(self.loader))
+        #grid = torchvision.utils.make_grid(images)
+        #self.tb.add_image('images', grid)
         #self.tb.add_graph(self.network, images.to(getattr(run, 'device', 'cpu')))
         #self.tb.add_graph(self.network, images)
 
     def end_run(self) -> None:
-        self.tb.close()
+        #self.tb.close()
         self.epoch_id = 0
 
     def begin_epoch(self) -> None:
@@ -89,12 +89,12 @@ class RunManager:
 
         loss = self.epoch_loss / 100 #len(self.loader)
         accuracy = self.epoch_num_correct / 100 #len(self.loader)
-        self.tb.add_scalar("Loss", loss, self.epoch_id)
-        self.tb.add_scalar("Accuracy", accuracy, self.epoch_id)
+        #self.tb.add_scalar("Loss", loss, self.epoch_id)
+        #self.tb.add_scalar("Accuracy", accuracy, self.epoch_id)
 
-        for name, param in self.network.named_parameters():
-            self.tb.add_histogram(name, param, self.epoch_id)
-            self.tb.add_histogram(f'{name}.grad', param.grad, self.epoch_id)
+        #for name, param in self.network.named_parameters():
+        #    self.tb.add_histogram(name, param, self.epoch_id)
+        #    self.tb.add_histogram(f'{name}.grad', param.grad, self.epoch_id)
 
         results = OrderedDict()
         results["run"] = self.run_id
@@ -103,9 +103,8 @@ class RunManager:
         results["accuracy"] = accuracy
         results["epoch duration"] = epoch_duration
         results["run duration"] = run_duration
-
-        #self.saver.path = f'checkpoint_run_{self.run_id}_wavelet_{self.wavelet}_lead{self.lead}.pt'
-        #self.saver(loss, self.network)
+        self.saver.path = f'/content/gdrive/MyDrive/new_checkpoint_run_{self.run_id}_wavelet_{self.wavelet}_lead{self.lead}.pt'
+        self.saver(loss, self.network)
         for k, v in self.run_params._asdict().items(): results[k] = v
         self.run_data.append(results)
         self.df = self.df.from_dict(self.run_data, orient='columns')  #pd.DataFrame.from_dict(self.run_data, orient='columns')
@@ -138,7 +137,7 @@ class Controls:
             wavelet=['mexh'],
             lr=[0.01],
             batch_size=[100],
-            lead=[3],
+            lead=[1],
             num_workers=[1],
             shuffle=[True],
             device=[torch.device("cuda:0" if torch.cuda.is_available() else "cpu")]
@@ -226,27 +225,28 @@ def train():
         device = run.device
         print(device)
         model = Model(attention=True).to(device)
-        #for parameter in model.parameters():
-        #    print(parameter.device)
         train_set_1_dir_path = '/content/gdrive/MyDrive/TrainingSet1'
-        #full_set_path = '/content/gdrive/MyDrive/alldata'
+        full_set_path = '/content/gdrive/MyDrive/alldata'
         ref_path = '/content/gdrive/MyDrive/reference.csv'
-        dataset = ArrhythmiaDataset(train_set_1_dir_path, ref_path, leads=run.lead, normalize=True, wavelet=run.wavelet)
+        test_path = '/content/gdrive/MyDrive/test_data'
+        REF = '/content/gdrive/MyDrive/REFERENCE.csv'
+        dataset = ArrhythmiaDataset(test_path, REF, leads=run.lead, normalize=True, wavelet=run.wavelet)
         train_loader = DataLoader(dataset, batch_size=run.batch_size, shuffle=True, num_workers=run.num_workers)
         train_loader = DeviceDataLoader(train_loader, device)
         optimizer = optim.SGD(params=model.parameters(), lr=run.lr, momentum=0.9, nesterov=True)
-        scheduler = ReduceLROnPlateau(optimizer, mode='min', patience=3, min_lr=1e-4)
+        scheduler = ReduceLROnPlateau(optimizer, mode='min', patience=3, min_lr=1e-5)
 
         m.begin_run(run, model, train_loader, run.lead, run.wavelet)
-        for epoch in range(50):
+        for epoch in range(5):
             m.begin_epoch()
             #param_groups = optimizer.param_groups
             #for g in param_groups:
             #    print("g_lr ", g['lr'])
             for i, batch in enumerate(train_loader):
                 print("batch ", i, "epoch ", epoch)
-                images = batch[0].to(device)
-                labels = batch[1].to(device)
+                images = batch[0]
+                images = images.to(run.device)
+                labels = batch[1].to(run.device)
                 preds = model(images)
                 loss = F.cross_entropy(preds, labels, reduction='mean')  # Calculate Loss
                 optimizer.zero_grad()
@@ -256,10 +256,9 @@ def train():
                 m.track_num_correct(preds, labels)
             scheduler.step(m.epoch_loss)
             m.end_epoch()
+            print(epoch)
         m.end_run()
     m.get_results()
     m.save('results')
 
-    
-if __name__ == 'main':
-  train()
+train()
