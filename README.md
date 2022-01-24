@@ -3,9 +3,11 @@
 
 Contains the code used to process the data and train the model, as well as generating answers to the 'test-set' and scoring.
 
-In its current state, for the code to work the dataset will need to be imported from the CPSC-2018 website: http://2018.icbeb.org/Challenge.html
+In its current state, for the code to work the data will need to be imported from the CPSC-2018 website: http://2018.icbeb.org/Challenge.html.
+
 I recreated 'TrainingSet1' to contain the first 100 samples to use whilst testing whether the code was working correctly.
-The 'full dataset' is the union of all training sets
+The 'full dataset' is the union of all training sets.
+Be aware that there are 2 reference files on the website - one of them is the corrected version with duplicates removed. You may need to remove duplicates and anamalies from the union of the datasets too. Due to it's size i have not moved the dataset to github.
 
 The code:
   1. 'ArrhythmiaDataset2D.py' contains the Dataset class which imports and processes the ECG signals, returning images and targets. To be used in conjunction with a       Dataloader object.
