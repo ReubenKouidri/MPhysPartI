@@ -8,11 +8,11 @@ I recreated 'TrainingSet1' to contain the first 100 samples to use whilst testin
 The 'full dataset' is the union of all training sets
 
 The code:
-  1. 'preprocessing.py' contains the Dataset class which imports and processes the ECG signals, returning images and targets. To be used in conjunction with a             Dataloader object.
+  1. 'ArrhythmiaDataset2D.py' contains the Dataset class which imports and processes the ECG signals, returning images and targets. To be used in conjunction with a       Dataloader object.
   2. 'model.py' contains the model architecture
-  3. 'main.py' uses these 2 files to train and save the model
+  3. 'train.py' uses these 2 files to train and save the model
   4. 'test.py' imports the trained model and tests it on 300 validation files, outputting a .csv file called 'answers.csv'
-  5. 'scoring.py' will then score these answers, returning a .csv file containing the scores to the cardiac arrhythmia super-types.
+  5. 'score.py' will then score these answers, returning a .csv file containing the scores to the cardiac arrhythmia super-types.
   *'reference.csv'* contains the true labels for the corresponding files
   
   
