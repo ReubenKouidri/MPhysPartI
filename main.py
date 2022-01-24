@@ -1,8 +1,7 @@
-#from model2 import Model
-#from CPSC import ArrhythmiaDataset
+from model import Model
+from ArrhythmiaDataset2D import ArrhythmiaDataset
 import time
 import json
-#import torch
 import collections
 from itertools import product
 from typing import List
@@ -48,7 +47,6 @@ class RunManager:
 
         self.network = None
         self.loader = None
-        #self.tb = None
         self.df = pd.DataFrame()
         self.saver = ModelSave(verbose=True, path=f'checkpoint_run_{self.run_id}.pt')
 
@@ -66,15 +64,8 @@ class RunManager:
         self.loader = loader
         self.lead = lead
         self.wavelet = wavelet
-        #self.tb = SummaryWriter(comment=f'-{run}')
-        #images, labels = next(iter(self.loader))
-        #grid = torchvision.utils.make_grid(images)
-        #self.tb.add_image('images', grid)
-        #self.tb.add_graph(self.network, images.to(getattr(run, 'device', 'cpu')))
-        #self.tb.add_graph(self.network, images)
 
     def end_run(self) -> None:
-        #self.tb.close()
         self.epoch_id = 0
 
     def begin_epoch(self) -> None:
@@ -89,12 +80,6 @@ class RunManager:
 
         loss = self.epoch_loss / 100 #len(self.loader)
         accuracy = self.epoch_num_correct / 100 #len(self.loader)
-        #self.tb.add_scalar("Loss", loss, self.epoch_id)
-        #self.tb.add_scalar("Accuracy", accuracy, self.epoch_id)
-
-        #for name, param in self.network.named_parameters():
-        #    self.tb.add_histogram(name, param, self.epoch_id)
-        #    self.tb.add_histogram(f'{name}.grad', param.grad, self.epoch_id)
 
         results = OrderedDict()
         results["run"] = self.run_id
@@ -126,10 +111,7 @@ class RunManager:
             orient='columns',
         ).to_csv(f'{fileName}.csv')
 
-        #with open(f'{fileName}.json', 'w', encoding='utf-8') as f:
-        #    json.dump(self.run_data, f, ensure_ascii=False, indent=4)
-
-
+        
 class Controls:
     @staticmethod
     def get_hyperparams():
@@ -221,7 +203,6 @@ class ModelSave:
 def train():
     m = RunManager()
     for run in RunBuilder.get_runs(Controls.get_hyperparams()):
-        #saver = ModelSave(verbose=True, path=f'checkpoint_{run_id}.pt')
         device = run.device
         print(device)
         model = Model(attention=True).to(device)
@@ -234,14 +215,14 @@ def train():
         train_loader = DataLoader(dataset, batch_size=run.batch_size, shuffle=True, num_workers=run.num_workers)
         train_loader = DeviceDataLoader(train_loader, device)
         optimizer = optim.SGD(params=model.parameters(), lr=run.lr, momentum=0.9, nesterov=True)
+        param_groups = optimizer.param_groups
         scheduler = ReduceLROnPlateau(optimizer, mode='min', patience=3, min_lr=1e-5)
-
+        num_epochs = 50
         m.begin_run(run, model, train_loader, run.lead, run.wavelet)
-        for epoch in range(5):
+        for epoch in range(num_epochs):
             m.begin_epoch()
-            #param_groups = optimizer.param_groups
-            #for g in param_groups:
-            #    print("g_lr ", g['lr'])
+            for g in param_groups:
+                print("g_lr ", g['lr'])
             for i, batch in enumerate(train_loader):
                 print("batch ", i, "epoch ", epoch)
                 images = batch[0]
