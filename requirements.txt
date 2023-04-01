@@ -1,0 +1,9 @@
+scipy
+torch
+pandas
+numpy
+tsmoothie
+typing
+scikit-learn
+scikit-image
+pyWavelets
