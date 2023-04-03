@@ -1,0 +1,21 @@
+{"train":
+  {
+    "criterion": "CrossEntropyLoss",
+    "epochs": "10",
+    "batch_size": "20",
+    "shuffle": "True",
+    "nesterov": "True",
+    "momentum": "0.9",
+    "lr": "0.0005"
+  },
+  "eval":
+  {
+    "batch_size": "1",
+    "workers": "0"
+  },
+  "data":
+  {
+    "data_path": "my_datasets/cpsc_data/train300",
+    "reference_path": "my_datasets/cpsc_data/reference300.csv"
+  }
+}
