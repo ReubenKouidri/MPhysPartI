@@ -2,11 +2,11 @@
 
 Code has been slightly modified in light of part II.
 
-Full dataset has not been included due to size, but can be found on the CPSC18 website: http://2018.icbeb.org/Challenge.html
-
 ## The code
 * <b>datasets</b>:
-  * <b>cpsc_data</b>:
+  * <b>cpsc_data</b>:  
+    Contains samples of data. Full dataset has not been included due to size, but can be found on the CPSC18
+    website: http://2018.icbeb.org/Challenge.html
     * test100: 100 data samples
     * train300: 300 data samples (overlapping) 
     * reference300: labels for the 300 samples
