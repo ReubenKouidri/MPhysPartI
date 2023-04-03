@@ -14,7 +14,7 @@ import torch.multiprocessing as mp
 import os
 
 
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 
 
 class Experiment:
