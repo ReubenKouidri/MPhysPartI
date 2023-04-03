@@ -56,7 +56,7 @@ class CPSCDataset(Dataset):
                     filepath = os.path.join(self.data_dir, filename)
                     data = loadmat(filepath)
                     ecg_data = data['ECG']['data'][0][0][self.lead]
-                    self.data.append(torch.as_tensor(self._process_data(ecg_data), dtype=torch.float64))
+                    self.data.append(torch.as_tensor(self._process_data(ecg_data), dtype=torch.float))
 
     def _process_data(self, data: np.ndarray) -> np.ndarray:
         data = self._trim_data(data, self.length, step=2) if self.trim else data
@@ -80,16 +80,16 @@ class CPSCDataset(Dataset):
 
     def __getitem__(self, item: int) -> tuple[Tensor, Any, Any] | tuple[Tensor, Any]:
         if self.load_in_memory:
-            return self.data[item], self.targets[item] if self.test else self.data[item], self.targets[item][0]
+            return self.data[item], self.targets[item] if self.test else self.targets[item][0]
         else:
             file_path = os.path.join(self.data_dir, self.filenames[item])
             data = loadmat(file_path)
             ecg_data = data['ECG']['data'][0][0][self.lead]
-            ecg_data = torch.as_tensor(self._process_data(ecg_data), dtype=torch.float64)
-            return ecg_data, self.targets[item] if self.test else ecg_data, self.targets[item][0]
+            ecg_data = torch.as_tensor(self._process_data(ecg_data), dtype=torch.float)
+            return ecg_data, self.targets[item] if self.test else self.targets[item][0]
 
     def __len__(self):
-        return len([name for name in os.listdir(self.data_dir) if os.path.isfile(os.path.join(self.data_dir, name))])
+        return len(self.filenames)
 
 
 class CPSCDataset2D(CPSCDataset):
@@ -97,17 +97,37 @@ class CPSCDataset2D(CPSCDataset):
 
     def __init__(
             self,
-            data_path: str | None = "datasets/cpsc_data/test100",
+            data_dir: str | None = "datasets/cpsc_data/test100",
             reference_path: str | None = "datasets/cpsc_data/reference300.csv",
             wavelet: str | None = "mexh",
-            lead: int | None = 3
+            lead: int | None = 3,
+            load_in_memory: bool | None = True,
+            test: bool | None = False,
+            **kwargs
     ) -> None:
-        super(CPSCDataset2D, self).__init__(data_path, reference_path, lead)
+        super(CPSCDataset2D, self).__init__(data_dir=data_dir,
+                                            reference_path=reference_path,
+                                            load_in_memory=load_in_memory,
+                                            lead=lead,
+                                            test=test,
+                                            **kwargs)
         self.wavelet = wavelet if self.wavelets.__contains__(wavelet) else "mexh"
         self.wavelet_fnc = getattr(wavelets_module, self.wavelet)
 
+        if self.load_in_memory:
+            self.images = []
+            for ecg in self.data:
+                ecg = self.wavelet_fnc(np.array(ecg), self.wavelets[self.wavelet])
+                ecg = torch.as_tensor(ecg, dtype=torch.float).unsqueeze(dim=0)
+                self.images.append(ecg)
+
+            self.images = torch.stack(self.images)
+
     def __getitem__(self, item: int) -> tuple[Any, Any, Any] | tuple[Any, Any]:
-        ecg, ref = super().__getitem__(item)
-        ecg_img = self.wavelet_fnc(np.array(ecg), self.wavelets[self.wavelet])
-        ecg_img = torch.as_tensor(ecg_img).unsqueeze(dim=0)
-        return ecg_img, ref
+        if self.load_in_memory:
+            return self.images[item], self.targets[item] if self.test else self.targets[item][0]
+        else:
+            ecg, ref = super().__getitem__(item)
+            ecg_img = self.wavelet_fnc(np.array(ecg), self.wavelets[self.wavelet])
+            ecg_img = torch.as_tensor(ecg_img).unsqueeze(dim=0)
+            return ecg_img, ref
