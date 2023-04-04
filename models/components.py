@@ -11,7 +11,7 @@ def make_activation(name: str) -> nn.Module:
     if name in __allowed_activations__:
         return getattr(nn, name)()
     else:
-        raise TypeError("Activation not valid!")
+        raise TypeError(f"Activation {name} not valid!")
 
 
 class MaxPool2D(nn.Module):
