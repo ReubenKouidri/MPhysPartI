@@ -5,12 +5,9 @@ from torch.utils.data import Dataset
 import numpy as np
 from tsmoothie import ConvolutionSmoother
 from typing import Any
-import importlib
 import os
 import csv
-
-wavelets_module_name = "wavelets"
-wavelets_module = importlib.import_module(wavelets_module_name)
+import my_utils.wavelets as wavelets_module
 
 
 class CPSCDataset(Dataset):
