@@ -1,4 +1,4 @@
-from dnasty.components import ConvBlock2D, MaxPool2D, CBAM, DenseBlock, Flatten
+from models.components import ConvBlock2D, MaxPool2D, CBAM, DenseBlock, Flatten
 import torch.nn as nn
 from collections import OrderedDict
 
