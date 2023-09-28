@@ -16,8 +16,8 @@ class CPSCDataset(Dataset):
 
     def __init__(
             self,
-            data_dir: str | None = "datasets/cpsc_data/test100",
-            reference_path: str | None = "datasets/cpsc_data/reference300.csv",
+            data_dir: str | None = "src/datasets/cpsc_data/test100",
+            reference_file: str | None = "src/datasets/cpsc_data/reference300.csv",
             normalize: bool | None = True,
             smoothen: bool | None = True,
             trim: bool | None = True,
@@ -34,7 +34,7 @@ class CPSCDataset(Dataset):
         self.lead = lead - 1  # leads in [1,12] hence -1 indexes array correctly
 
         self.targets = []
-        with open(reference_path, 'r', ) as ref:
+        with open(reference_file, 'r') as ref:
             reader = csv.reader(ref)
             next(reader)
             for row in reader:
@@ -102,12 +102,8 @@ class CPSCDataset2D(CPSCDataset):
             test: bool | None = False,
             **kwargs
     ) -> None:
-        super(CPSCDataset2D, self).__init__(data_dir=data_dir,
-                                            reference_path=reference_path,
-                                            load_in_memory=load_in_memory,
-                                            lead=lead,
-                                            test=test,
-                                            **kwargs)
+        super(CPSCDataset2D, self).__init__(data_dir=data_dir, reference_file=reference_path, lead=lead, test=test,
+                                            load_in_memory=load_in_memory, **kwargs)
         self.wavelet = wavelet if self.wavelets.__contains__(wavelet) else "mexh"
         self.wavelet_fnc = getattr(wavelets_module, self.wavelet)
 
