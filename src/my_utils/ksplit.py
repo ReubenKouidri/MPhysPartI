@@ -2,7 +2,7 @@ import random
 import warnings
 from torch.utils.data import Subset
 import collections.abc as abc
-from datasets.CPSCDataset import CPSCDataset2D
+from src.CPSCDataset import CPSCDataset2D
 
 random.seed(9834275)
 

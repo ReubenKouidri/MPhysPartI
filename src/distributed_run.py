@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import numpy as np
-from datasets.CPSCDataset import CPSCDataset2D
+from src.CPSCDataset import CPSCDataset2D
 from models.defaults import S_2RB2D2
 from torch.utils.data import random_split
 import torch.optim as optim
